@@ -39,13 +39,11 @@ class Memory(object):
         self.conformations[self.position] = conformation
         self.position = (self.position + 1) % self.capacity
 
-    def sample(self, batch_size, dev="cpu"):
+    def sample(self, batch_size):
         indices = range(len(self))
         subset = np.random.choice(indices,size=batch_size,replace=False).tolist()     
         seqs  = torch.stack([x for x in Batch(subset,self.sequences)])
         confs = torch.stack([x for x in Batch(subset,self.conformations)])
-        seqs = seqs.to(dev)
-        confs = confs.to(dev)
         return subset, seqs, confs
 
     def __len__(self):

@@ -38,15 +38,27 @@ class HP():
     def random(cls,n,h_prob=0.5):
         return cls("".join(["H" if random.random() < h_prob else "P" for _ in range(n)]))
     
-    def one_hot(self):
-        return torch.tensor([[1,0] if s == "H" else [0,1] for s in self.sequence],dtype=torch.float)
+    def randomize_conf(self):
+        a = []
+        for i in range(len(self)-1):
+            r = random.random()
+            if r < 1/3:
+                a.append("R")
+            elif r < 2/3:
+                a.append("L")
+            else:
+                a.append("S")
+        return "".join(a)
+    
+    def one_hot(self,dev="cpu"):
+        return torch.tensor([[1,0] if s == "H" else [0,1] for s in self.sequence],dtype=torch.float,device=dev)
 
-    def conf_one_hot(self):
+    def conf_one_hot(self,dev="cpu"):
         return torch.tensor([
             [1,0,0] if s == "R" 
                     else [0,1,0] if s == "L" 
                     else [0,0,1]
-                    for s in self.conformation],dtype=torch.float)    
+                    for s in self.conformation],dtype=torch.float,device=dev)    
    
     def coordinates(self, conformation=None):
         if conformation is None:
@@ -153,6 +165,11 @@ class HP():
     
     @classmethod
     def energy_of_one_hot(cls,sequence,conformation):
-        s = HP.one_hot_seq_to_string(sequence)
-        c = HP.sample_from_conf_one_hot(conformation)
-        return HP(s,c).energy()
+        return HP.create_from_one_hots(sequence,conformation).energy()
+    
+    @classmethod
+    def create_from_one_hots(cls, seq, conf):
+        s = HP.one_hot_seq_to_string(seq)
+        c = HP.sample_from_conf_one_hot(conf)
+        return HP(s,c)        
+        
