@@ -60,6 +60,14 @@ class HP():
                     else [0,0,1]
                     for s in self.conformation],dtype=torch.float,device=dev)    
    
+    def make_state(self, dev="cpu"):
+        s = self.one_hot(dev=dev)
+        c = self.conf_one_hot(dev=dev)
+        z = torch.zeros(1,3)
+        z = z.to(dev)
+        c = torch.cat([c,z])
+        return torch.cat([s,c],1)
+
     def coordinates(self, conformation=None):
         if conformation is None:
             c = self.conformation
