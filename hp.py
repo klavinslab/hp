@@ -31,12 +31,19 @@ class HP():
             return math.pi / 2
         elif s == "L":
             return -math.pi / 2
+        elif s == "B":
+            return math.pi
         else:
             raise Exception("Unknown symbol '%s' in conformation" % s)
             
     @classmethod
     def random(cls,n,h_prob=0.5):
         return cls("".join(["H" if random.random() < h_prob else "P" for _ in range(n)]))
+    
+    def orient(self,a):
+        c = list(self.conformation)
+        c[0] = a
+        self.conformation = "".join(c)        
     
     def randomize_conf(self):
         a = []
@@ -83,17 +90,36 @@ class HP():
                 y.append(y[i]+int(math.sin(a)))
         return x, y
 
-    def show(self,ax):
+    def show(self,ax,offset_x=0, offset_y=0,index=False):
         ax.set_aspect(1)
         x,y = self.coordinates()
-        for i in range(len(self)):
-            color = 'gray' if self.sequence[i] == 'H' else 'white'
-            c = plt.Circle((x[i],y[i]), 0.25, edgecolor='black', facecolor=color)
+        x = [ w+offset_x for w in x ]
+        y = [ w+offset_y for w in y ]        
+        for i in range(len(x)):
+            color = '#444444' if self.sequence[i] == 'H' else 'white'
+            c = plt.Circle((x[i],y[i]), 0.35, edgecolor='black', facecolor=color)
             ax.add_artist(c)
-            if i < len(self)-1:
+            if index:
+                color = 'black' if self.sequence[i] != 'H' else 'white'
+                ax.text(x[i]-0.1,y[i]-0.1,i,fontsize=11,color=color)
+            if i < len(x)-1:
                 ax.plot([x[i],x[i+1]],[y[i],y[i+1]],zorder=-1,c='black')
-        ax.set_xlim(min(x)-5,max(x)+5)
-        ax.set_ylim(min(y)-5,max(y)+5)
+        for i in range(len(x)):
+            for j in range(i):
+                if i != j and HP.dist(x[i],x[j],y[i],y[j]) < 0.1:
+                    c = plt.Circle((x[i],y[i]), 0.45, edgecolor='orange', linewidth=5, fill=False)
+                    ax.add_artist(c)    
+        ax.set_xlim(min(x)-1,max(x)+1)
+        ax.set_ylim(min(y)-1,max(y)+1)
+        ax.axis('off')
+        
+    def distogram(self, ax):
+        x, y = self.coordinates()
+        d = np.zeros((len(self),len(self)))
+        for i in range(len(self)):
+            for j in range(len(self)):
+                d[i][j] = HP.dist(x[i],x[j],y[i],y[j])
+        ax.imshow(d)       
     
     @classmethod   
     def dist(cls,x1,x2,y1,y2):
@@ -106,7 +132,7 @@ class HP():
             c = conformation
         x,y=self.coordinates(c)
         e = 0
-        for i in range(len(self)):
+        for i in range(len(x)):
             for j in range(i):
                 if HP.dist(x[i],x[j],y[i],y[j]) <= 0.1:
                     e += 100
